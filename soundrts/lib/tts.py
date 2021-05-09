@@ -28,8 +28,7 @@ class _TTS:
             self.o = None
     def closeConnection(self):
         try:
-            if self.o:
-                self.o.close()
+            self.o.close()
         except Exception as e:
             pass
         self.o = None
@@ -39,26 +38,26 @@ class _TTS:
         else:
             return self._end_time > time.time()
     def Speak(self, text, interrupt=True):
-        if not self.o:
-            self.initializeOutput()
+        if interrupt:
+            self.Stop()
+        self.initializeOutput()
         try:
-            if interrupt:
-                self.Stop()
             text = '<#APPEND#>' + text
             self.o.send(text.encode('utf-8'))
-            time.sleep(0.01)
+            time.sleep(0.05)
         except Exception as e:
-            self.closeConnection()
+            pass
+        self.closeConnection()
         self._end_time = time.time() + len(text) * self._wait_delay_per_character
 
     def Stop(self):
-        if not self.o:
-            self.initializeOutput()
+        self.initializeOutput()
         try:
             self.o.send(''.encode('utf-8'))
-            time.sleep(0.01)
+            time.sleep(0.05)
         except Exception as e:
-            self.closeConnection()
+            pass
+        self.closeConnection()
 
 
 
