@@ -14,7 +14,6 @@ class _TTS:
     _end_time = None
 
     def __init__(self, wait_delay_per_character):
-        #self.o = accessible_output2.outputs.auto.Auto()
         self.o = None
         self._wait_delay_per_character = wait_delay_per_character
         self.initializeOutput()
@@ -26,7 +25,6 @@ class _TTS:
             self.o.connect(socketFile)
             time.sleep(0.01)
         except Exception as e:
-            #print('2'+str(e))
             self.o = None
     def closeConnection(self):
         try:
