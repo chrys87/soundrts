@@ -4,8 +4,7 @@ import threading
 import time
 from queue import Queue
 from typing import Callable, List, Tuple
-
-import accessible_output2.outputs.auto
+import socket, glob, time
 
 from .log import exception
 
@@ -15,22 +14,54 @@ class _TTS:
     _end_time = None
 
     def __init__(self, wait_delay_per_character):
-        self.o = accessible_output2.outputs.auto.Auto()
+        #self.o = accessible_output2.outputs.auto.Auto()
+        self.o = None
         self._wait_delay_per_character = wait_delay_per_character
-
+        self.initializeOutput()
+    def initializeOutput(self):
+        self.closeConnection()
+        try:
+            socketFile = glob.glob('/tmp/orca-*.sock')[0]
+            self.o = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            self.o.connect(socketFile)
+            time.sleep(0.01)
+        except Exception as e:
+            #print('2'+str(e))
+            self.o = None
+    def closeConnection(self):
+        try:
+            if self.o:
+                self.o.close()
+        except Exception as e:
+            pass
+        self.o = None
     def IsSpeaking(self):
         if self._end_time is None:
             return False
         else:
             return self._end_time > time.time()
-
-    def Speak(self, text):
-        self.o.output(text, interrupt=True)
+    def Speak(self, text, interrupt=True):
+        if not self.o:
+            self.initializeOutput()
+        try:
+            if interrupt:
+                self.Stop()
+            text = '<#APPEND#>' + text
+            self.o.send(text.encode('utf-8'))
+            time.sleep(0.01)
+        except Exception as e:
+            self.closeConnection()
         self._end_time = time.time() + len(text) * self._wait_delay_per_character
 
     def Stop(self):
-        self.o.output("", interrupt=True)
-        self._end_time = None
+        if not self.o:
+            self.initializeOutput()
+        try:
+            self.o.send(''.encode('utf-8'))
+            time.sleep(0.01)
+        except Exception as e:
+            self.closeConnection()
+
 
 
 _tts = None
